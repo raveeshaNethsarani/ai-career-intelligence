@@ -1,0 +1,29 @@
+# Secrets
+.env
+*.pem
+*.key
+
+# Real data and Docker volumes
+postgres_data/
+n8n_data/
+ollama_data/
+*.dump
+*.sql.bak
+backups/
+
+# Private candidate profile (keep only synthetic samples in the repo)
+profile.private.json
+*.private.*
+
+# Logs
+*.log
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python / Node (if added later)
+__pycache__/
+node_modules/
