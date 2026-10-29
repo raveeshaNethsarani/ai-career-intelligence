@@ -27,3 +27,4 @@ Thumbs.db
 # Python / Node (if added later)
 __pycache__/
 node_modules/
+tmp/
