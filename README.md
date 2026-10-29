@@ -26,3 +26,8 @@ Only official APIs and RSS feeds are used. No scraping of login-protected sites.
 
 ## Documentation
 Setup, architecture and troubleshooting guides will be added under `docs/`.
+
+## Data sources and attribution
+- Remote jobs data courtesy of [Remotive](https://remotive.com). Job listings link back to the original Remotive page.
+- Remotive data is stored only in a local database and is not committed to this repository. Sample data in this repo is synthetic.
+- Remotive allows at most 4 API requests per day; this project fetches once per day.

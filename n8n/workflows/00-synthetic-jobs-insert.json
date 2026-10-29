@@ -1,0 +1,90 @@
+{
+  "name": "00 - Synthetic jobs insert",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "029e6cdd-c76f-4330-b205-b84bbeac4aae",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = [\n  {\n    source: 'synthetic',\n    external_id: 's1',\n    source_url: 'https://example.test/jobs/1',\n    title: 'Backend Developer',\n    company: 'Acme Ltd',\n    location: 'Remote',\n    work_mode: 'remote',\n    description: 'We need Python, PostgreSQL and Docker skills. AWS is a plus. 2 years experience.'\n  },\n  {\n    source: 'synthetic',\n    external_id: 's2',\n    source_url: 'https://example.test/jobs/2',\n    title: 'Automation Engineer',\n    company: 'Beta Labs',\n    location: 'Colombo',\n    work_mode: 'hybrid',\n    description: 'Build workflows with n8n, Python and SQL. Experience with REST APIs is required.'\n  },\n  {\n    source: 'synthetic',\n    external_id: 's3',\n    source_url: 'https://example.test/jobs/3',\n    title: 'Senior Java Lead',\n    company: 'Bigcorp',\n    location: 'Onsite',\n    work_mode: 'onsite',\n    description: 'Lead a team of Java engineers. 10+ years of experience with Spring and Kubernetes.'\n  }\n];\n\nreturn jobs.map(j => ({ json: j }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "cc50d540-aa6e-49fc-b0bb-a667f84676c2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO jobs (source, external_id, source_url, title, company, location, work_mode, description)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8)\nON CONFLICT (source_url) DO NOTHING\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$json.source, $json.external_id, $json.source_url, $json.title, $json.company, $json.location, $json.work_mode, $json.description] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "cdd520b9-2855-4bce-bc53-79f0dce41d23",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f15f64eb-7356-4ee6-b9df-89a99be86cf3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "AybkA4UmvpTC01Zh",
+  "tags": []
+}
