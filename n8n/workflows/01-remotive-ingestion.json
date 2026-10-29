@@ -1,0 +1,205 @@
+{
+  "name": "01 - Remotive ingestion",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4642f5a4-b7e6-49db-a3ba-6321e5b2e3e0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://remotive.com/api/remote-jobs",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "category",
+              "value": "software-dev"
+            },
+            {
+              "name": "limit ",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "89fa55fe-a095-453f-b80f-a0e19e0e4bce",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "1ea183df-2b10-4bd9-be6d-9a8cee81f930",
+      "name": "Split Out",
+      "alwaysOutputData": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_DESC = 8000;\nconst TRACKING = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ref','fbclid','gclid'];\n\nfunction htmlToText(html) {\n  return String(html || '')\n    .replace(/<(script|style)[\\s\\S]*?<\\/\\1>/gi, ' ')\n    .replace(/<br\\s*\\/?>|<\\/p>|<\\/li>|<\\/h[1-6]>/gi, '\\n')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/[ \\t]+/g, ' ')\n    .replace(/\\n\\s*\\n+/g, '\\n')\n    .trim();\n}\n\nfunction cleanUrl(u) {\n  let s = String(u || '').trim().split('#')[0];\n  const q = s.indexOf('?');\n  if (q === -1) return s;\n  const base = s.slice(0, q);\n  const kept = s.slice(q + 1).split('&').filter(function (p) {\n    return p && TRACKING.indexOf(p.split('=')[0].toLowerCase()) === -1;\n  });\n  return kept.length ? base + '?' + kept.join('&') : base;\n}\n\nreturn $input.all().map(function (item) {\n  const j = item.json;\n  const title = String(j.title || '').trim();\n  const sourceUrl = cleanUrl(j.url);\n  const description = htmlToText(j.description).slice(0, MAX_DESC);\n\n  let postedAt = null;\n  if (j.publication_date) {\n    const d = new Date(j.publication_date + 'Z');\n    if (!isNaN(d.getTime()) && d.getTime() <= Date.now() + 86400000) {\n      postedAt = d.toISOString();\n    }\n  }\n\n  let reason = null;\n  if (!title) reason = 'empty title';\n  else if (!/^https:\\/\\/[^\\s]+$/.test(sourceUrl)) reason = 'invalid url';\n  else if (description.length < 50) reason = 'description too short';\n\n  return {\n    json: {\n      valid: reason === null,\n      reason: reason,\n      source: 'remotive',\n      external_id: String(j.id === undefined || j.id === null ? '' : j.id),\n      source_url: sourceUrl,\n      title: title,\n      company: j.company_name ? String(j.company_name).trim() : null,\n      location: j.candidate_required_location || null,\n      work_mode: 'remote',\n      employment_type: j.job_type || null,\n      description: description,\n      posted_at: postedAt,\n      raw: reason === null ? null : j\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        144
+      ],
+      "id": "1a2709ed-ccd9-4225-8855-c4b2a215f6ee",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "af2d0e45-1720-4810-bbca-f090492fc4d7",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        144
+      ],
+      "id": "c39783fc-b605-4879-a48e-60c0bcd631c5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO jobs (source, external_id, source_url, title, company, location, work_mode, employment_type, description, posted_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\nON CONFLICT (source_url) DO NOTHING\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$json.source, $json.external_id, $json.source_url, $json.title, $json.company, $json.location, $json.work_mode, $json.employment_type, $json.description, $json.posted_at] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        912,
+        48
+      ],
+      "id": "90a28fcd-826f-4f54-9050-6d58fb3e6e1a",
+      "name": "Execute a SQL query",
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fa9ced16-97d9-4157-8642-1b6bd7f2e1ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "sUyyDr7rNkpFQ22Q",
+  "tags": []
+}
