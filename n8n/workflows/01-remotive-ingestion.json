@@ -87,7 +87,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        688,
+        912,
         144
       ],
       "id": "c39783fc-b605-4879-a48e-60c0bcd631c5",
@@ -104,12 +104,13 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        912,
+        1136,
         48
       ],
       "id": "90a28fcd-826f-4f54-9050-6d58fb3e6e1a",
       "name": "jobs insert",
       "retryOnFail": true,
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "GiucMEjdGmy8n3hO",
@@ -128,7 +129,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        912,
+        1136,
         240
       ],
       "id": "b1f03937-6467-4386-a4cd-4ae93a5db623",
@@ -152,6 +153,34 @@
       ],
       "id": "1a2709ed-ccd9-4225-8855-c4b2a215f6ee",
       "name": "normalize and validate"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "source_url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        688,
+        144
+      ],
+      "id": "a79e1d5d-535c-430b-8c69-303d3cd9ca32",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $('normalize and validate').all().map(function (i) { return i.json; });\nconst fetched = all.length;\nconst rejected = all.filter(function (j) { return !j.valid; }).length;\nconst validCount = fetched - rejected;\nconst inserted = $input.all().filter(function (i) {\n  return i.json.id !== undefined && i.json.id !== null;\n}).length;\nconst duplicates = validCount - inserted;\n\nreturn [{\n  json: {\n    workflow_name: '01-remotive-ingestion',\n    status: 'success',\n    fetched: fetched,\n    rejected: rejected,\n    duplicates: duplicates,\n    inserted: inserted\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        48
+      ],
+      "id": "dbc21505-03a8-4ead-8e59-1d6affa74c66",
+      "name": "summary"
     }
   ],
   "pinData": {},
@@ -209,10 +238,27 @@
     },
     "jobs insert": {
       "main": [
-        []
+        [
+          {
+            "node": "summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "normalize and validate": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
       "main": [
         [
           {
@@ -229,7 +275,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "3941534c-0758-41b9-ba00-fdae69e1f322",
+  "versionId": "a290c354-b99e-4161-8cd3-2fc43cdbd2c2",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
