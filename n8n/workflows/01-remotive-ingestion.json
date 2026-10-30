@@ -61,19 +61,6 @@
     },
     {
       "parameters": {
-        "jsCode": "const MAX_DESC = 8000;\nconst TRACKING = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ref','fbclid','gclid'];\n\nfunction htmlToText(html) {\n  return String(html || '')\n    .replace(/<(script|style)[\\s\\S]*?<\\/\\1>/gi, ' ')\n    .replace(/<br\\s*\\/?>|<\\/p>|<\\/li>|<\\/h[1-6]>/gi, '\\n')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/[ \\t]+/g, ' ')\n    .replace(/\\n\\s*\\n+/g, '\\n')\n    .trim();\n}\n\nfunction cleanUrl(u) {\n  let s = String(u || '').trim().split('#')[0];\n  const q = s.indexOf('?');\n  if (q === -1) return s;\n  const base = s.slice(0, q);\n  const kept = s.slice(q + 1).split('&').filter(function (p) {\n    return p && TRACKING.indexOf(p.split('=')[0].toLowerCase()) === -1;\n  });\n  return kept.length ? base + '?' + kept.join('&') : base;\n}\n\nreturn $input.all().map(function (item) {\n  const j = item.json;\n  const title = String(j.title || '').trim();\n  const sourceUrl = cleanUrl(j.url);\n  const description = htmlToText(j.description).slice(0, MAX_DESC);\n\n  let postedAt = null;\n  if (j.publication_date) {\n    const d = new Date(j.publication_date + 'Z');\n    if (!isNaN(d.getTime()) && d.getTime() <= Date.now() + 86400000) {\n      postedAt = d.toISOString();\n    }\n  }\n\n  let reason = null;\n  if (!title) reason = 'empty title';\n  else if (!/^https:\\/\\/[^\\s]+$/.test(sourceUrl)) reason = 'invalid url';\n  else if (description.length < 50) reason = 'description too short';\n\n  return {\n    json: {\n      valid: reason === null,\n      reason: reason,\n      source: 'remotive',\n      external_id: String(j.id === undefined || j.id === null ? '' : j.id),\n      source_url: sourceUrl,\n      title: title,\n      company: j.company_name ? String(j.company_name).trim() : null,\n      location: j.candidate_required_location || null,\n      work_mode: 'remote',\n      employment_type: j.job_type || null,\n      description: description,\n      posted_at: postedAt,\n      raw: reason === null ? null : j\n    }\n  };\n});"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        464,
-        144
-      ],
-      "id": "1a2709ed-ccd9-4225-8855-c4b2a215f6ee",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -100,7 +87,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        688,
+        912,
         144
       ],
       "id": "c39783fc-b605-4879-a48e-60c0bcd631c5",
@@ -117,18 +104,83 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        912,
+        1136,
         48
       ],
       "id": "90a28fcd-826f-4f54-9050-6d58fb3e6e1a",
-      "name": "Execute a SQL query",
+      "name": "jobs insert",
       "retryOnFail": true,
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "GiucMEjdGmy8n3hO",
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO rejected_jobs (source, raw, reason)\nVALUES ($1, $2::jsonb, $3);",
+        "options": {
+          "queryReplacement": "={{ [$json.source, JSON.stringify($json.raw), $json.reason] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1136,
+        240
+      ],
+      "id": "b1f03937-6467-4386-a4cd-4ae93a5db623",
+      "name": "rejected_jobs",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_DESC = 8000;\nconst TRACKING = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','ref','fbclid','gclid'];\n\nfunction htmlToText(input) {\n  const decode = (t) => t\n    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')\n    .replace(/&quot;/gi, '\"').replace(/&#39;|&apos;/gi, \"'\")\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&#(\\d+);/g, (_, n) => String.fromCharCode(+n))\n    .replace(/&amp;/gi, '&');\n\n  let s = String(input ?? '');\n  s = decode(s);                                        \n  s = s.replace(/<(script|style)[\\s\\S]*?<\\/\\1>/gi, ' ');\n  s = s.replace(/<\\/(p|div|li|h[1-6]|tr)>|<br\\s*\\/?>/gi, '\\n');\n  s = s.replace(/<[^>]+>/g, ' ');                      \n  s = decode(s);                                       \n  s = s.replace(/<[^>]+>/g, ' ');                      \n  return s.replace(/[ \\t]+/g, ' ').replace(/\\n\\s*\\n+/g, '\\n').trim();\n}\n\nfunction cleanUrl(u) {\n  let s = String(u || '').trim().split('#')[0];\n  const q = s.indexOf('?');\n  if (q === -1) return s;\n  const base = s.slice(0, q);\n  const kept = s.slice(q + 1).split('&').filter(function (p) {\n    return p && TRACKING.indexOf(p.split('=')[0].toLowerCase()) === -1;\n  });\n  return kept.length ? base + '?' + kept.join('&') : base;\n}\n\nreturn $input.all().map(function (item) {\n  const j = item.json;\n  const title = String(j.title || '').trim();\n  const sourceUrl = cleanUrl(j.url);\n  const description = htmlToText(j.description).slice(0, MAX_DESC);\n\n  let postedAt = null;\n  if (j.publication_date) {\n    const d = new Date(j.publication_date + 'Z');\n    if (!isNaN(d.getTime()) && d.getTime() <= Date.now() + 86400000) {\n      postedAt = d.toISOString();\n    }\n  }\n\n  let reason = null;\n  if (!title) reason = 'empty title';\n  else if (!/^https:\\/\\/[^\\s]+$/.test(sourceUrl)) reason = 'invalid url';\n  else if (description.length < 50) reason = 'description too short';\n\n  return {\n    json: {\n      valid: reason === null,\n      reason: reason,\n      source: 'remotive',\n      external_id: String(j.id === undefined || j.id === null ? '' : j.id),\n      source_url: sourceUrl,\n      title: title,\n      company: j.company_name ? String(j.company_name).trim() : null,\n      location: j.candidate_required_location || null,\n      work_mode: 'remote',\n      employment_type: j.job_type || null,\n      description: description,\n      posted_at: postedAt,\n      raw: reason === null ? null : j\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        144
+      ],
+      "id": "1a2709ed-ccd9-4225-8855-c4b2a215f6ee",
+      "name": "normalize and validate"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "source_url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        688,
+        144
+      ],
+      "id": "a79e1d5d-535c-430b-8c69-303d3cd9ca32",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $('normalize and validate').all().map(function (i) { return i.json; });\nconst fetched = all.length;\nconst rejected = all.filter(function (j) { return !j.valid; }).length;\nconst validCount = fetched - rejected;\nconst inserted = $input.all().filter(function (i) {\n  return i.json.id !== undefined && i.json.id !== null;\n}).length;\nconst duplicates = validCount - inserted;\n\nreturn [{\n  json: {\n    workflow_name: '01-remotive-ingestion',\n    status: 'success',\n    fetched: fetched,\n    rejected: rejected,\n    duplicates: duplicates,\n    inserted: inserted\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        48
+      ],
+      "id": "dbc21505-03a8-4ead-8e59-1d6affa74c66",
+      "name": "summary"
     }
   ],
   "pinData": {},
@@ -159,18 +211,7 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "If",
+            "node": "normalize and validate",
             "type": "main",
             "index": 0
           }
@@ -181,7 +222,47 @@
       "main": [
         [
           {
-            "node": "Execute a SQL query",
+            "node": "jobs insert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "rejected_jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "jobs insert": {
+      "main": [
+        [
+          {
+            "node": "summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "normalize and validate": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -194,7 +275,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "fa9ced16-97d9-4157-8642-1b6bd7f2e1ec",
+  "versionId": "188302c9-c41a-410c-9c87-513bd64f8147",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
