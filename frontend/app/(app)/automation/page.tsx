@@ -15,9 +15,9 @@ const WORKFLOWS = [
 ];
 
 const STATUS_STYLE = {
-  success: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  partial: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  failed: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+  success: "bg-[#ECF9F2] text-[#289E68] border border-[#C6EEDC]",
+  partial: "bg-[#FEF7E6] text-[#D08C0B] border border-[#FBE4B2]",
+  failed: "bg-[#FEECEB] text-[#D9423F] border border-[#FBD0CF]",
 } as const;
 
 export default async function AutomationPage() {

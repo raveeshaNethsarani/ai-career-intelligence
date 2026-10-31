@@ -131,7 +131,7 @@ export function ProfileForm({ initial }: { initial: Profile | null }) {
         <Button type="submit" disabled={status.kind === "saving"}>
           {status.kind === "saving" ? "Saving…" : "Save profile"}
         </Button>
-        {status.kind === "ok" ? <span className="text-sm text-emerald-600">{status.message}</span> : null}
+        {status.kind === "ok" ? <span className="text-sm text-[#289E68]">{status.message}</span> : null}
         {status.kind === "error" ? <span className="text-sm text-destructive">{status.message}</span> : null}
       </div>
     </form>
