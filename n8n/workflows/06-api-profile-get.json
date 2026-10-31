@@ -1,0 +1,93 @@
+{
+  "name": "06 - API profile get",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "api-profile",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ee0213aa-7b8c-4952-9d70-2b13bcfe74bf",
+      "name": "Webhook",
+      "webhookId": "4926dfd9-bd32-4bca-ad87-71ce94fa725b"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT json_build_object('profile', (\n  SELECT row_to_json(p) FROM (\n    SELECT id, display_name, target_roles, skills, must_have, avoid_keywords,\n           experience_years::float8 AS experience_years,\n           preferred_locations, work_modes, updated_at\n    FROM candidate_profile ORDER BY id LIMIT 1\n  ) p\n)) AS data;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        176,
+        16
+      ],
+      "id": "e20b0325-7552-4cc2-8ccd-dc05a9c9703d",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        400,
+        16
+      ],
+      "id": "ce3999f1-8212-4614-9bf7-2efa85cb8a3d",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "206cb654-c254-49cc-8952-232bc19d8725",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "RHWgulp14jV0L3JJ",
+  "tags": []
+}
