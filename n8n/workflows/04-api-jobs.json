@@ -1,0 +1,93 @@
+{
+  "name": "04 - API jobs",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "api-jobs",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "18afa836-bb76-498b-9a9d-bbc27756a7f9",
+      "name": "Webhook",
+      "webhookId": "e48760f3-56c2-43cc-8703-44a10cec6fa5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT json_build_object(\n  'jobs', coalesce(json_agg(t ORDER BY t.posted_at DESC NULLS LAST), '[]'::json)\n) AS data\nFROM (\n  SELECT j.id, j.source, j.source_url, j.title, j.company, j.location,\n         j.work_mode, j.employment_type, j.posted_at,\n         left(j.description, 600) AS snippet,\n         m.final_score, m.rules_score, m.ai_score,\n         m.matched_skills, m.missing_skills, m.reasoning\n  FROM jobs j\n  LEFT JOIN LATERAL (\n    SELECT * FROM job_matches mm\n    WHERE mm.job_id = j.id\n    ORDER BY mm.created_at DESC\n    LIMIT 1\n  ) m ON true\n  ORDER BY j.posted_at DESC NULLS LAST\n  LIMIT 200\n) t;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e757238b-258a-4b80-ad1d-c41767e7c2cc",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a533d57e-bd05-4338-b894-953ee76c1163",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "49a4b638-43d4-4f9b-a11c-d4cd2680294f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "eqB8cRv2Z6Ndj7CD",
+  "tags": []
+}
