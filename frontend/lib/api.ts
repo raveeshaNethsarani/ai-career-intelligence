@@ -1,6 +1,6 @@
 import "server-only";
-import { n8nGet } from "@/lib/n8n";
-import type { Job, WorkflowRun } from "@/lib/types";
+import { n8nGet, n8nPost } from "@/lib/n8n";
+import type { Job, Profile, ProfileInput, WorkflowRun } from "@/lib/types";
 
 export type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -18,4 +18,12 @@ export function getJobs() {
 
 export function getRuns() {
   return safe(async () => (await n8nGet<{ runs: WorkflowRun[] }>("api-runs")).runs);
+}
+
+export function getProfile() {
+  return safe(async () => (await n8nGet<{ profile: Profile | null }>("api-profile")).profile);
+}
+
+export function saveProfile(input: ProfileInput) {
+  return safe(async () => (await n8nPost<{ profile: Profile }>("api-profile-save", input)).profile);
 }
