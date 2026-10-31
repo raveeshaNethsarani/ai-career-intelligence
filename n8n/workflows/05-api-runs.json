@@ -1,0 +1,93 @@
+{
+  "name": "05 - API runs",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "api-runs",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8d4a29f0-7334-41e2-a51b-97ecbd89e36c",
+      "name": "Webhook",
+      "webhookId": "5730059f-0a81-4053-b91d-d5473ca2a569"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT json_build_object(\n  'runs', coalesce(json_agg(t), '[]'::json)\n) AS data\nFROM (\n  SELECT id, workflow_name, status, fetched, rejected, duplicates, inserted, started_at\n  FROM workflow_runs\n  ORDER BY id DESC\n  LIMIT 20\n) t;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3e211869-d835-4289-8174-b2801cff8bbf",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "b33a4e3c-3adf-4055-a1dd-378c45443e6b",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5b7c9908-802a-4f63-b804-8996fcbd5456",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "YO9gIdKGJBQ3rj59",
+  "tags": []
+}
