@@ -27,3 +27,18 @@ export type WorkflowRun = {
   inserted: number;
   started_at: string;
 };
+
+export type Profile = {
+  id: number;
+  display_name: string;
+  target_roles: string[];
+  skills: string[];
+  must_have: string[];
+  avoid_keywords: string[];
+  experience_years: number;
+  preferred_locations: string[];
+  work_modes: string[];
+  updated_at: string;
+};
+
+export type ProfileInput = Omit<Profile, "id" | "updated_at">;

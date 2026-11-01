@@ -127,3 +127,45 @@
     @apply font-sans;
     }
 }
+/* Career Intelligence theme: light SaaS palette. Placed last so it overrides the template tokens. */
+:root,
+.dark {
+  color-scheme: light;
+  --radius: 0.75rem;
+
+  --background: #f9fafc;
+  --foreground: #242024;
+  --card: #ffffff;
+  --card-foreground: #242024;
+  --popover: #ffffff;
+  --popover-foreground: #242024;
+
+  --primary: #5092f0;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f4f8;
+  --secondary-foreground: #242024;
+  --muted: #f2f4f8;
+  --muted-foreground: #72788a;
+  --accent: #eaf2fe;
+  --accent-foreground: #2c75ea;
+  --destructive: #f36c69;
+
+  --border: #e9edf3;
+  --input: #e9edf3;
+  --ring: #5092f0;
+
+  --chart-1: #5092f0;
+  --chart-2: #4ac48a;
+  --chart-3: #fab62e;
+  --chart-4: #f36c69;
+  --chart-5: #72788a;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #72788a;
+  --sidebar-primary: #5092f0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaf2fe;
+  --sidebar-accent-foreground: #2c75ea;
+  --sidebar-border: #e9edf3;
+  --sidebar-ring: #5092f0;
+}
