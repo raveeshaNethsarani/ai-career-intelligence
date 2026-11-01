@@ -102,7 +102,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
           No jobs match these filters.
         </div>
       ) : (
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y rounded-2xl border bg-card">
           {visible.map((job) => (
             <li key={job.id}>
               <button
@@ -162,7 +162,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
                       {(selected.matched_skills ?? []).length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {(selected.matched_skills ?? []).map((s) => (
-                            <Badge key={s} className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" variant="secondary">
+                            <Badge key={s} className="bg-[#ECF9F2] text-[#289E68] border border-[#C6EEDC]" variant="secondary">
                               {s}
                             </Badge>
                           ))}
@@ -171,7 +171,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
                       {(selected.missing_skills ?? []).length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {(selected.missing_skills ?? []).map((s) => (
-                            <Badge key={s} className="bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300" variant="secondary">
+                            <Badge key={s} className="bg-[#FEECEB] text-[#D9423F] border border-[#FBD0CF]" variant="secondary">
                               missing: {s}
                             </Badge>
                           ))}
