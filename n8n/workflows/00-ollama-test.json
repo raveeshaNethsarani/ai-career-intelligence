@@ -1,0 +1,62 @@
+{
+  "name": "00 - Ollama test",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e54cb8e1-b7c7-48f5-8c27-16b8f09ba9aa",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"qwen2.5:3b\",\n  \"stream\": false,\n  \"format\": \"json\",\n  \"options\": { \"temperature\": 0 },\n  \"messages\": [\n    { \"role\": \"system\", \"content\": \"You are a recruiter. Reply with JSON only.\" },\n    { \"role\": \"user\", \"content\": \"Candidate skills: python, sql. Job requires: python, docker. Reply as {\\\"match_score\\\": number 0-100, \\\"matched_skills\\\": [], \\\"missing_skills\\\": []}\" }\n  ]\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "7e6e79b1-0801-414f-becd-fa5b06861a3c",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3b149f8b-362d-4460-b0f7-052e3f7c06ab",
+  "meta": {
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "gEKR0JEXe9y4ZGmn",
+  "tags": []
+}
