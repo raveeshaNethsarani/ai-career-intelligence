@@ -93,3 +93,23 @@ CREATE TABLE IF NOT EXISTS error_logs (
     occurred_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     resolved      BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+CREATE TABLE IF NOT EXISTS reports (
+    id          BIGSERIAL PRIMARY KEY,
+    report_date DATE NOT NULL,
+    title       TEXT NOT NULL,
+    markdown    TEXT NOT NULL,
+    data        JSONB NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_reports_date UNIQUE (report_date)
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+    id          BIGSERIAL PRIMARY KEY,
+    report_date DATE NOT NULL,
+    title       TEXT NOT NULL,
+    markdown    TEXT NOT NULL,
+    data        JSONB NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT uq_reports_date UNIQUE (report_date)
+);
