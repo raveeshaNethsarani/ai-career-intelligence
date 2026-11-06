@@ -1,0 +1,96 @@
+{
+  "name": "10 - API job action",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "api-job-action",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dcfdaedb-e9d0-4280-86bc-f10afcaa6091",
+      "name": "Webhook",
+      "webhookId": "96438ea7-b4b6-4ab0-86e5-08db0617604a"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH up AS (\n  INSERT INTO job_actions (job_id, saved, status, updated_at)\n  VALUES ($1::bigint, $2::boolean, $3, now())\n  ON CONFLICT (job_id) DO UPDATE SET\n    saved = EXCLUDED.saved,\n    status = EXCLUDED.status,\n    updated_at = now()\n  RETURNING job_id, saved, status\n)\nSELECT json_build_object('action', row_to_json(up)) AS data FROM up;",
+        "options": {
+          "queryReplacement": "={{ [ $json.body.job_id, $json.body.saved, $json.body.status ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "d94d1aa3-b864-4af3-bf52-d938f5d18832",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "59205199-b9a4-4ac5-afc3-d854cf16a612",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ee572f6f-e91e-4390-bb1b-7550be7f87f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "EbCDGdodLcA4TviB",
+  "tags": []
+}
