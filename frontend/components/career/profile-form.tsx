@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ChipPreview } from "@/components/career/chip-preview";
 
 const MODES = ["remote", "hybrid", "onsite"] as const;
 const areaClass = "min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
@@ -93,11 +94,13 @@ export function ProfileForm({ initial }: { initial: Profile | null }) {
           <div className="space-y-2">
             <Label htmlFor="skills">Your skills</Label>
             <textarea id="skills" className={areaClass} value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="python, sql, n8n, javascript" />
+            <ChipPreview items={toList(skills)} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="must">Must have</Label>
               <Input id="must" value={mustHave} onChange={(e) => setMustHave(e.target.value)} placeholder="python" />
+              <ChipPreview items={toList(mustHave)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="avoid">Avoid keywords</Label>

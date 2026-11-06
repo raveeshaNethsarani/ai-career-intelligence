@@ -42,3 +42,40 @@ export type Profile = {
 };
 
 export type ProfileInput = Omit<Profile, "id" | "updated_at">;
+
+export type ReportMatch = {
+  id: number;
+  source: string;
+  source_url: string;
+  title: string;
+  company: string | null;
+  location: string | null;
+  work_mode: string;
+  fetched_at: string;
+  final_score: number;
+  matched_skills: string[] | null;
+  missing_skills: string[] | null;
+  reasoning: string | null;
+  red_flags: string[] | null;
+  needs_review: boolean;
+};
+
+export type ReportData = {
+  new_jobs: number;
+  total_jobs: number;
+  scored: number;
+  strong: number;
+  moderate: number;
+  needs_review: number;
+  top: ReportMatch[];
+  gaps: { skill: string; count: number }[];
+};
+
+export type Report = {
+  id: number;
+  report_date: string;
+  title: string;
+  markdown: string;
+  data: ReportData;
+  created_at: string;
+};
