@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Briefcase,
   ExternalLink,
+  FileText,
   LayoutDashboard,
   Settings,
   Sparkles,
@@ -28,6 +29,7 @@ import {
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/reports", label: "Reports", icon: FileText },
   { href: "/profile", label: "My profile", icon: UserRound },
   { href: "/automation", label: "Automation", icon: Workflow },
   { href: "/settings", label: "Settings", icon: Settings },
