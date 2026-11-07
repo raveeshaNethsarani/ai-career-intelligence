@@ -20,7 +20,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT json_build_object(\n  'jobs', coalesce(json_agg(t ORDER BY t.posted_at DESC NULLS LAST), '[]'::json)\n) AS data\nFROM (\n  SELECT j.id, j.source, j.source_url, j.title, j.company, j.location,\n         j.work_mode, j.employment_type, j.posted_at,\n         left(j.description, 600) AS snippet,\n         m.final_score, m.rules_score, m.ai_score,\n         m.matched_skills, m.missing_skills, m.reasoning\n  FROM jobs j\n  LEFT JOIN LATERAL (\n    SELECT * FROM job_matches mm\n    WHERE mm.job_id = j.id\n    ORDER BY mm.created_at DESC\n    LIMIT 1\n  ) m ON true\n  ORDER BY j.posted_at DESC NULLS LAST\n  LIMIT 200\n) t;",
+        "query": "SELECT json_build_object(\n  'jobs', coalesce(json_agg(t ORDER BY t.posted_at DESC NULLS LAST), '[]'::json)\n) AS data\nFROM (\n  SELECT j.id, j.source, j.source_url, j.title, j.company, j.location,\n         j.work_mode, j.employment_type, j.posted_at,\n         left(j.description, 600) AS snippet,\n         m.final_score, m.rules_score, m.ai_score,\n         m.matched_skills, m.missing_skills, m.reasoning,\n         a.saved, a.status AS action_status\n  FROM jobs j\n  LEFT JOIN LATERAL (\n    SELECT * FROM job_matches mm\n    WHERE mm.job_id = j.id\n    ORDER BY mm.created_at DESC\n    LIMIT 1\n  ) m ON true\n  LEFT JOIN job_actions a ON a.job_id = j.id\n  WHERE j.source <> 'synthetic'\n  ORDER BY j.posted_at DESC NULLS LAST\n  LIMIT 200\n) t;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -82,7 +82,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "49a4b638-43d4-4f9b-a11c-d4cd2680294f",
+  "versionId": "056ff52b-a98e-4a44-bafa-a821427038c3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
