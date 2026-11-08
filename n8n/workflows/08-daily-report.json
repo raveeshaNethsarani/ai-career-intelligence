@@ -1,0 +1,122 @@
+{
+  "name": "08 - Daily report",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "59b1f9d5-3cb3-416b-bd98-cb1981086d80",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH recent AS (\n  SELECT j.id, j.source, j.source_url, j.title, j.company, j.location, j.work_mode, j.fetched_at,\n         m.final_score, m.rules_score, m.ai_score, m.matched_skills, m.missing_skills,\n         m.reasoning, m.red_flags, m.needs_review\n  FROM jobs j\n  JOIN LATERAL (\n    SELECT * FROM job_matches mm\n    WHERE mm.job_id = j.id\n    ORDER BY mm.created_at DESC\n    LIMIT 1\n  ) m ON true\n  WHERE j.source <> 'synthetic'\n    AND COALESCE(j.posted_at, j.fetched_at) >= now() - interval '14 days'\n),\nbest AS (\n  SELECT * FROM recent\n  WHERE final_score >= 50\n  ORDER BY final_score DESC, fetched_at DESC\n  LIMIT 15\n),\ngaps AS (\n  SELECT skill, count(*) AS n\n  FROM recent, unnest(missing_skills) AS skill\n  WHERE final_score >= 40\n  GROUP BY skill\n  ORDER BY n DESC, skill\n  LIMIT 8\n)\nSELECT json_build_object(\n  'new_jobs',     (SELECT count(*) FROM jobs WHERE source <> 'synthetic' AND fetched_at >= now() - interval '24 hours'),\n  'total_jobs',   (SELECT count(*) FROM jobs WHERE source <> 'synthetic'),\n  'scored',       (SELECT count(*) FROM recent),\n  'strong',       (SELECT count(*) FROM recent WHERE final_score >= 70),\n  'moderate',     (SELECT count(*) FROM recent WHERE final_score >= 50 AND final_score < 70),\n  'needs_review', (SELECT count(*) FROM recent WHERE needs_review),\n  'top',          (SELECT coalesce(json_agg(row_to_json(b) ORDER BY b.final_score DESC, b.fetched_at DESC), '[]'::json) FROM best b),\n  'gaps',         (SELECT coalesce(json_agg(json_build_object('skill', g.skill, 'count', g.n) ORDER BY g.n DESC, g.skill), '[]'::json) FROM gaps g)\n) AS data;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6fce5c64-d1ff-41e2-891a-1572d377267d",
+      "name": "Get report data",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.data;\nconst reportDate = new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10);\nconst SOURCE = { remotive: 'Remotive', arbeitnow: 'Arbeitnow' };\n\nfunction md(s) {\n  return String(s || '')\n    .replace(/[\\r\\n]+/g, ' ')\n    .replace(/([\\\\`*_{}\\[\\]<>()#|!])/g, '\\\\$1')\n    .trim();\n}\nfunction link(url, text) {\n  return /^https:\\/\\/[^\\s()<>]+$/.test(String(url || '')) ? '[' + text + '](' + url + ')' : text;\n}\nfunction list(a) {\n  return a && a.length ? a.map(md).join(', ') : 'none';\n}\n\nconst top = d.top || [];\nconst gaps = d.gaps || [];\nconst lines = [];\n\nlines.push('# Daily career report: ' + reportDate);\nlines.push('');\nlines.push('New jobs in the last 24 hours: ' + d.new_jobs + '. Jobs scored (last 14 days): ' + d.scored + '. Strong matches (70+): ' + d.strong + '. Moderate (50-69): ' + d.moderate + '.');\nif (d.needs_review > 0) {\n  lines.push('');\n  lines.push(d.needs_review + ' job(s) have rules and AI scores that disagree. Check them yourself.');\n}\nlines.push('');\nlines.push('## Top matches');\n\nif (top.length === 0) {\n  lines.push('');\n  lines.push('No job scored 50 or more yet. Run the matching workflow, or check the skills in your profile.');\n}\n\ntop.forEach(function (j, i) {\n  const src = SOURCE[j.source] || j.source;\n  lines.push('');\n  lines.push((i + 1) + '. **' + md(j.title) + '** at ' + md(j.company || 'unknown company') + ' (' + md(j.location || j.work_mode) + '): ' + Math.round(Number(j.final_score)) + '/100' + (j.needs_review ? ' (needs review)' : ''));\n  lines.push('   Matched: ' + list(j.matched_skills) + '. Missing: ' + list(j.missing_skills) + '.');\n  if (j.reasoning) lines.push('   ' + md(j.reasoning));\n  lines.push('   ' + link(j.source_url, 'View on ' + src) + ' (via ' + src + ')');\n});\n\nlines.push('');\nlines.push('## Skills to learn next');\nlines.push('');\nif (gaps.length === 0) {\n  lines.push('No recurring skill gaps yet.');\n} else {\n  gaps.forEach(function (g) {\n    lines.push('- ' + md(g.skill) + ': missing in ' + g.count + ' job(s)');\n  });\n}\n\nlines.push('');\nlines.push('---');\nlines.push('Scores are estimates, not a guarantee of any outcome. Check each job yourself before applying.');\nlines.push('Job data: Remotive and Arbeitnow. Each listing links back to its original page.');\n\nreturn [{\n  json: {\n    report_date: reportDate,\n    title: 'Daily career report: ' + reportDate,\n    markdown: lines.join('\\n'),\n    data: d\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "6a1c3d11-c7aa-4bc8-8b39-67b16fd17b1c",
+      "name": "Build report"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO reports (report_date, title, markdown, data)\nVALUES ($1::date, $2, $3, $4::jsonb)\nON CONFLICT (report_date) DO UPDATE SET\n  title = EXCLUDED.title,\n  markdown = EXCLUDED.markdown,\n  data = EXCLUDED.data,\n  created_at = now()\nRETURNING id, report_date;",
+        "options": {
+          "queryReplacement": "={{ [ $json.report_date, $json.title, $json.markdown, JSON.stringify($json.data) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "f0041c6e-6d21-4d59-b6c1-5a0b33511ab1",
+      "name": "Save report",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get report data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get report data": {
+      "main": [
+        [
+          {
+            "node": "Build report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build report": {
+      "main": [
+        [
+          {
+            "node": "Save report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7d9c353a-9317-423a-b6ba-0f27352b6a79",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "N4UqLTg1QFoIGNdv",
+  "tags": []
+}
