@@ -9,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const WORKFLOWS = [
   { name: "01 - Remotive ingestion", state: "Implemented", note: "Fetches remote jobs, cleans and stores them" },
   { name: "02 - Arbeitnow ingestion", state: "Implemented", note: "Remote jobs only, HTML decoded" },
-  { name: "03 - AI job matching", state: "Planned", note: "Rules score plus local AI (Ollama)" },
-  { name: "04 - Daily report", state: "Planned", note: "Top matches summary" },
-  { name: "05 - Error monitoring", state: "Planned", note: "Logs failed executions" },
+  { name: "03 - AI job matching", state: "Implemented", note: "Rules score plus local AI (Ollama), with fallback" },
+  { name: "08 - Daily report", state: "Implemented", note: "Top matches and skills to learn next" },
+  { name: "09 - Error monitoring", state: "Planned", note: "Logs failed executions" },
+  { name: "Daily schedule", state: "Planned", note: "Runs the pipeline automatically once a day" },
 ];
 
 const STATUS_STYLE = {
