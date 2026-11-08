@@ -171,7 +171,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const all = $('normalize and validate').all().map(function (i) { return i.json; });\nconst fetched = all.length;\nconst rejected = all.filter(function (j) { return !j.valid; }).length;\nconst validCount = fetched - rejected;\nconst inserted = $input.all().filter(function (i) {\n  return i.json.id !== undefined && i.json.id !== null;\n}).length;\nconst duplicates = validCount - inserted;\n\nreturn [{\n  json: {\n    workflow_name: '01-remotive-ingestion',\n    status: 'success',\n    fetched: fetched,\n    rejected: rejected,\n    duplicates: duplicates,\n    inserted: inserted\n  }\n}];"
+        "jsCode": "const all = $('normalize and validate').all().map(function (i) { return i.json; });\nconst fetched = all.length;\nconst rejected = all.filter(function (j) { return !j.valid; }).length;\nconst validCount = fetched - rejected;\nconst inserted = $input.all().filter(function (i) {\n  return i.json && i.json.id !== undefined && i.json.id !== null;\n}).length;\nconst duplicates = Math.max(validCount - inserted, 0);\nconst status = fetched === 0 ? 'partial' : 'success';\n\nreturn [{\n  json: {\n    workflow_name: '01-remotive-ingestion',\n    status: status,\n    fetched: fetched,\n    rejected: rejected,\n    duplicates: duplicates,\n    inserted: inserted\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -181,6 +181,29 @@
       ],
       "id": "dbc21505-03a8-4ead-8e59-1d6affa74c66",
       "name": "summary"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_runs (workflow_name, status, fetched, rejected, duplicates, inserted, finished_at)\nVALUES ($1, $2, $3, $4, $5, $6, now());",
+        "options": {
+          "queryReplacement": "={{ [ $json.workflow_name, $json.status, $json.fetched, $json.rejected, $json.duplicates, $json.inserted ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1584,
+        48
+      ],
+      "id": "b37758bb-c7b6-45c0-beaf-2609d80726f5",
+      "name": "log run",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -268,6 +291,17 @@
           }
         ]
       ]
+    },
+    "summary": {
+      "main": [
+        [
+          {
+            "node": "log run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -275,7 +309,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "188302c9-c41a-410c-9c87-513bd64f8147",
+  "versionId": "e241cc6e-b946-459b-afcc-a73195387190",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
