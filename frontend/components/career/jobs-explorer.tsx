@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ExternalLink, Search } from "lucide-react";
 import type { Job } from "@/lib/types";
 import { formatDate, safeHttpsUrl, sourceLabel } from "@/lib/format";
+import { JobActions } from "@/components/career/job-actions";
 import { ScoreBadge } from "@/components/career/score-badge";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
   const [mode, setMode] = useState("all");
   const [sort, setSort] = useState<"newest" | "score">("newest");
   const [scoredOnly, setScoredOnly] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
   const [selected, setSelected] = useState<Job | null>(null);
 
   const sources = useMemo(
@@ -38,6 +40,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
       if (source !== "all" && j.source !== source) return false;
       if (mode !== "all" && j.work_mode !== mode) return false;
       if (scoredOnly && j.final_score === null) return false;
+      if (savedOnly && !j.saved) return false;
       if (!needle) return true;
       return `${j.title} ${j.company ?? ""} ${j.location ?? ""}`.toLowerCase().includes(needle);
     });
@@ -45,7 +48,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
       list.sort((a, b) => (b.final_score ?? -1) - (a.final_score ?? -1));
     }
     return list;
-  }, [jobs, q, source, mode, sort, scoredOnly]);
+  }, [jobs, q, source, mode, sort, scoredOnly, savedOnly]);
 
   const link = selected ? safeHttpsUrl(selected.source_url) : null;
   const isSample = selected?.source === "synthetic";
@@ -91,6 +94,10 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
           <input type="checkbox" checked={scoredOnly} onChange={(e) => setScoredOnly(e.target.checked)} />
           Scored only
         </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" checked={savedOnly} onChange={(e) => setSavedOnly(e.target.checked)} />
+          Saved only
+        </label>
       </div>
 
       <p className="text-sm text-muted-foreground">
@@ -120,6 +127,7 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
                 <Badge variant="outline" className="shrink-0">
                   via {sourceLabel(job.source)}
                 </Badge>
+                {job.saved ? <Badge variant="secondary">Saved</Badge> : null}
                 <ScoreBadge score={job.final_score} />
               </button>
             </li>
@@ -144,6 +152,13 @@ export function JobsExplorer({ jobs }: { jobs: Job[] }) {
                   {selected.employment_type ? <Badge variant="secondary">{selected.employment_type}</Badge> : null}
                   <Badge variant="outline">Posted {formatDate(selected.posted_at)}</Badge>
                 </div>
+
+                <JobActions
+                  key={selected.id}
+                  jobId={selected.id}
+                  initialSaved={selected.saved ?? false}
+                  initialStatus={selected.action_status ?? "new"}
+                />
 
                 <section className="space-y-2">
                   <h3 className="font-medium">Match</h3>
