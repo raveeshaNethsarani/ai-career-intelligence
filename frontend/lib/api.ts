@@ -31,3 +31,9 @@ export function saveProfile(input: ProfileInput) {
 export function getLatestReport() {
   return safe(async () => (await n8nGet<{ report: Report | null }>("api-report")).report);
 }
+
+export type JobActionInput = { job_id: number; saved: boolean; status: string };
+
+export function saveJobAction(input: JobActionInput) {
+  return safe(async () => (await n8nPost<{ action: JobActionInput }>("api-job-action", input)).action);
+}
