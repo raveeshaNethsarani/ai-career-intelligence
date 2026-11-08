@@ -15,6 +15,8 @@ export type Job = {
   matched_skills: string[] | null;
   missing_skills: string[] | null;
   reasoning: string | null;
+  saved: boolean | null;
+  action_status: string | null;
 };
 
 export type WorkflowRun = {
