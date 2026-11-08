@@ -162,7 +162,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const all = $('normalize and validate').all().map(function (i) { return i.json; });\nconst fetched = all.length;\nconst rejected = all.filter(function (j) { return !j.valid; }).length;\nconst validCount = fetched - rejected;\nconst inserted = $input.all().filter(function (i) {\n  return i.json.id !== undefined && i.json.id !== null;\n}).length;\nconst duplicates = validCount - inserted;\n\nreturn [{\n  json: {\n    workflow_name: '02-arbeitnow-ingestion',\n    status: 'success',\n    fetched: fetched,\n    rejected: rejected,\n    duplicates: duplicates,\n    inserted: inserted\n  }\n}];"
+        "jsCode": "const all = $('normalize and validate').all().map(function (i) { return i.json; });\nconst fetched = all.length;\nconst rejected = all.filter(function (j) { return !j.valid; }).length;\nconst validCount = fetched - rejected;\nconst inserted = $input.all().filter(function (i) {\n  return i.json && i.json.id !== undefined && i.json.id !== null;\n}).length;\nconst duplicates = Math.max(validCount - inserted, 0);\nconst status = fetched === 0 ? 'partial' : 'success';\n\nreturn [{\n  json: {\n    workflow_name: '02-arbeitnow-ingestion',\n    status: status,\n    fetched: fetched,\n    rejected: rejected,\n    duplicates: duplicates,\n    inserted: inserted\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -311,7 +311,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "3737321c-a9ff-4e22-8273-964875b76429",
+  "versionId": "fd73905a-2c02-48f6-9bd6-3787aa741f20",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
