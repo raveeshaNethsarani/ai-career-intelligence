@@ -23,7 +23,7 @@ export default async function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span>Ollama (local AI)</span>
-              <Badge variant="outline">Not set up yet</Badge>
+              <Badge variant="secondary">qwen2.5:3b, local</Badge>
             </div>
           </CardContent>
         </Card>
@@ -56,7 +56,7 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>Everything runs on this machine. Jobs and your profile are stored in a local PostgreSQL database.</p>
-            <p>The AI model will run locally with Ollama, so your profile is not sent to any cloud service.</p>
+            <p>The AI model runs locally with Ollama, so your profile is not sent to any cloud service.</p>
             <p>Match scores are estimates to help you prioritise. They are not a guarantee of any outcome.</p>
           </CardContent>
         </Card>
