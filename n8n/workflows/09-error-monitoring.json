@@ -1,0 +1,124 @@
+{
+  "name": "09 - Error monitoring",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1cb71425-8e02-4467-ba03-e9d5ecb73ef8",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json;\nconst ex = e.execution || {};\nconst wf = e.workflow || {};\nconst err = ex.error || {};\n\nfunction clean(s, n) {\n  return String(s || '')\n    .replace(/\\s+/g, ' ')\n    .replace(/[A-Fa-f0-9]{32,}/g, '[redacted]')\n    .trim()\n    .slice(0, n);\n}\n\nreturn [{\n  json: {\n    workflow_name: clean(wf.name || 'unknown', 120),\n    failed_node: clean(ex.lastNodeExecuted || '', 120),\n    error_message: clean(err.message || 'Unknown error', 500),\n    execution_id: String(ex.id || '')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2274e677-550f-4336-a78b-c22d90c75a57",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO error_logs (workflow_name, failed_node, error_message, execution_id)\nVALUES ($1, $2, $3, $4);",
+        "options": {
+          "queryReplacement": "={{ [ $json.workflow_name, $json.failed_node, $json.error_message, $json.execution_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        480,
+        0
+      ],
+      "id": "15181b89-fd28-4172-8f14-c2ed3eeab3bb",
+      "name": "Log error",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_runs (workflow_name, status, finished_at)\nVALUES ($1, 'failed', now());",
+        "options": {
+          "queryReplacement": "={{ [ $json.workflow_name ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        704,
+        0
+      ],
+      "id": "27565a11-474e-4780-b381-6d72b4ec6a77",
+      "name": "Log failed run",
+      "credentials": {
+        "postgres": {
+          "id": "GiucMEjdGmy8n3hO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log error": {
+      "main": [
+        [
+          {
+            "node": "Log failed run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "06665534-9568-45cc-900b-d45725af0551",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b911443b64600bd52f4250bc78c94abffc53ecd59b0a15021bf1179041a6c7ce"
+  },
+  "nodeGroups": [],
+  "id": "7gSMqzoRXgvAMBi1",
+  "tags": []
+}
